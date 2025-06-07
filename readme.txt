@@ -1,0 +1,1 @@
+pyinstaller --onefile --add-data "random_names.txt;." main.py

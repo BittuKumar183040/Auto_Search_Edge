@@ -1,44 +1,47 @@
-## 🔍 Edge Automation
-This Python application automates Microsoft Edge to simulate typing and searching random name-word combinations using a mix of dictionary words and preloaded names. It uses `pyautogui` for keyboard control, `pygetwindow` for detecting when Edge is open, and can be optionally adapted to run in headless mode via Selenium.
+## 🔍 Edge Search Automation with Selenium
+
+This Python application automates Microsoft Edge browser searches using the user's logged-in profile. It performs keyword + name-based search using real dictionary words (`nltk`) and names from a file (`random_names.txt`). The profile used is configurable via a `config.json` file placed beside the executable.
 
 ---
 
 ### 📦 Features
 
-* Launches Microsoft Edge
-* Waits until the Edge window is ready
-* Focuses on the address bar using `F4`
-* Types a random name + dictionary word and presses `Enter`
-* Repeats the process 10 times
-* Uses `nltk` corpus and a `random_names.txt` file
-* Compatible with PyInstaller packaging via `resource_path()`
+* Uses **your actual Edge browser profile** (bookmarks, search history, etc. preserved)
+* Searches **realistic phrases** like `"eclipse Amelia"` or `"quantum Noah"`
+* Reads names from `random_names.txt`
+* Configurable **profile name** via `config.json`
+* Uses `nltk` for English words
+* Optionally packable using `PyInstaller` for one-file `.exe`
 
 ---
 
 ### 🛠️ Requirements
 
+Install the required Python packages:
+
 ```bash
-pip install pyautogui pygetwindow nltk
+pip install selenium nltk
 ```
 
-Additionally, if using Selenium in headless mode (optional):
-
-Also install `msedgedriver` from: [Microsoft Edge WebDriver](https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/)
+Also install [Microsoft Edge WebDriver](https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/) compatible with your Edge version, and ensure it's in your system PATH.
 
 ---
 
 ### 📁 File Structure
+
 ```
 project/
-├── main.py               # Your main automation script
-├── random_names.txt      # Text file with 1000+ random names
-└── README.md             # This file
+├── main.py             # Your automation script
+├── random_names.txt    # File with 1000+ names (1 per line)
+├── config.json         # External config file for profile selection
+└── README.md           # This file
 ```
+
 ---
 
 ### 📄 `random_names.txt`
 
-Place this file in the same directory. It should contain one name per line:
+Each line should be a name (used for pairing with dictionary words):
 
 ```
 Olivia
@@ -51,53 +54,68 @@ Ava
 
 ---
 
+### ⚙️ `config.json`
+
+This file **must be placed next to the compiled `.exe`** (or in the same folder during development). Example:
+
+```json
+{
+  "profile": "Profile 1"
+}
+```
+
+To use the **default profile**, set:
+
+```json
+{
+  "profile": "Default"
+}
+```
+
+---
+
 ### 🚀 How to Run
 
 ```bash
 python main.py
 ```
 
-If packaged with PyInstaller:
+If you're building a `.exe` with PyInstaller, run:
 
 ```bash
-pyinstaller --onefile main.py
-dist/main.exe
+pyinstaller --onefile --add-data "random_names.txt;." main.py
 ```
 
----
-
-### 🧠 How It Works
-
-1. Downloads the NLTK `words` corpus if not already available.
-2. Loads random names from `random_names.txt`.
-3. Opens Edge using `subprocess`.
-4. Waits until a window with "Edge" in its title appears.
-5. Types name + word into the address bar and presses Enter.
-6. Repeats the search 10 times with a 3-second interval.
+> ⚠️ Do **not** include `config.json` in the bundle — it stays **outside** so users can edit it.
 
 ---
 
-### ⚙️ Optional Headless Mode
+### 💡 How It Works
 
-To avoid showing the browser, consider using **Selenium with Edge in headless mode**. Replace the `pyautogui` and `subprocess` logic with a headless driver.
+1. Prompts for number of searches (`10` default)
+2. Kills existing Edge processes (to avoid profile lock issues)
+3. Reads `random_names.txt` and `nltk` word list
+4. Loads Edge using the logged-in user profile (from `config.json`)
+5. For each search:
 
-```python
-from selenium import webdriver
-from selenium.webdriver.edge.options import Options
+   * Creates a search phrase (`word + name`)
+   * Opens Bing search with that term
+   * Waits for page to fully load
+6. Exits automatically after all searches
 
-options = Options()
-options.add_argument("--headless")
-driver = webdriver.Edge(options=options)
-driver.get("https://www.google.com")
+---
+
+### ✅ Example Output
+
 ```
-
----
-
-### 📌 Notes
-
-* On first run, `nltk.download("words")` will download the word list.
-* Ensure Microsoft Edge is installed and on your system path.
-* This script is for automation/testing purposes only — do not use it to spam search engines or scrape sites against their terms of service.
+All existing Edge tabs will be closed. Press Enter to proceed...
+Browser profile: Profile 1
+Edge Browser start kar raha hu...
+Searching for: quantum Ava
+Searching for: gravity Liam
+...
+Performed: 10 searches.
+```
 
 ---
 
