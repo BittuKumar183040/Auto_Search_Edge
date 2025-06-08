@@ -1,81 +1,79 @@
+import subprocess
+import pyautogui
+import pygetwindow as gw
 import time
 import random
-import os
-import sys
 import nltk
 from nltk.corpus import words
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.edge.service import Service as EdgeService
-from selenium.webdriver.edge.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-import json
+import sys
+import os
 
-os.system("taskkill /F /IM msedge.exe >nul 2>&1")
-
+# Get resource path (for PyInstaller compatibility)
 def resource_path(relative_path):
-  try:
-    base_path = sys._MEIPASS
-  except Exception:
-    base_path = os.path.abspath(".")
-  return os.path.join(base_path, relative_path)
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
+# Download and shuffle words
 nltk.download("words")
 all_words = words.words()
 random.shuffle(all_words)
 
+# Ask user for number of searches
+try:
+    os.system('cls' if os.name == 'nt' else 'clear')
+    user_input = input("How many searches need to perform? (10 by default): ").strip()
+    search_count = int(user_input) if user_input else 10
+except ValueError:
+    print("Invalid input. Using default value of 10.")
+    search_count = 10
+
+# Get random name from file
 def getRandomNames():
     path = resource_path("random_names.txt")
     with open(path, "r") as f:
-      names = [line.strip() for line in f if line.strip()]
+        names = [line.strip() for line in f if line.strip()]
     return random.choice(names)
 
+# Generator for unique words
 def unique_word_generator():
-  for word in all_words:
-    yield word
+    for word in all_words:
+        yield word
 
-options = Options()
-options.add_argument("--start-maximized")
-options.add_argument("--disable-blink-features=AutomationControlled")
-options.add_experimental_option("excludeSwitches", ["enable-automation"])
-options.add_experimental_option("useAutomationExtension", False)
-
-# Read from config.json to get the profile name
-exe_dir = os.path.dirname(sys.executable if getattr(sys, 'frozen', False) else __file__)
-config_path = os.path.join(exe_dir, "config.json")
-with open(config_path, "r") as config_file:
-  config = json.load(config_file)
-profile_name = config.get("profile", "Default")
-print("Browser profile: ", profile_name)
-
-# user_data_dir = os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\Edge\User Data")
-# options.add_argument(f"--user-data-dir={user_data_dir}")
-options.add_argument(f"--profile-directory={profile_name}")
-
-print("Edge Browser start kar raha hu...")
-service = EdgeService(log_path=os.devnull) 
-driver = webdriver.Edge(service=service, options=options)
-driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
 word_gen = unique_word_generator()
 
-search_count = config.get("search_count", 10)
+# Main loop: open browser, search, close it
 for i in range(search_count):
-  search_term = next(word_gen) + " " + getRandomNames()
-  print(f"Searching for: {search_term}")
-  search_url = "https://www.bing.com/search?q=" + search_term.replace(" ", "+")
-  driver.get(search_url)
-  try:
-    WebDriverWait(driver, 10).until(
-      EC.presence_of_element_located((By.NAME, "q"))
-    )
-    time.sleep(0.5)
-  except Exception:
-    print(f"Timeout while loading search page for: {search_term}")
+    print(f"\nOpening browser for search {i+1}/{search_count}...")
+    subprocess.Popen(["start", "msedge"], shell=True)
+    
+    edge_window = None
+    for _ in range(20):
+        windows = gw.getWindowsWithTitle("Edge")
+        for win in windows:
+            if "Edge" in win.title:
+                edge_window = win
+                break
+        if edge_window:
+            break
+        time.sleep(0.5)
+    
+    if edge_window:
+        print("Edge is ready. Performing search...")
+        edge_window.activate()
+        time.sleep(1)  # Give focus time
+        pyautogui.hotkey("f4")
+        time.sleep(0.5)
+        search_query = next(word_gen) + " " + getRandomNames()
+        print(f"Searching for: {search_query}")
+        pyautogui.write(search_query, interval=0.01)
+        pyautogui.press("enter")
+        time.sleep(3)  # Let the search load
+        subprocess.call("taskkill /IM msedge.exe /F", shell=True)
+        print("Closed browser.")
+    else:
+        print("Edge window not found. Skipping this iteration.")
 
-  time.sleep(0.5)
-
-print("Performed:", search_count, "searches.")
-
-driver.quit()
+print("\n✅ All searches completed.")
