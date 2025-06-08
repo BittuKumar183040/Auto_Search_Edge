@@ -1,47 +1,47 @@
-## 🔍 Edge Search Automation with Selenium
+## 🚀 Edge Search Automation (Keystroke Version)
 
-This Python application automates Microsoft Edge browser searches using the user's logged-in profile. It performs keyword + name-based search using real dictionary words (`nltk`) and names from a file (`random_names.txt`). The profile used is configurable via a `config.json` file placed beside the executable.
-
----
-
-### 📦 Features
-
-* Uses **your actual Edge browser profile** (bookmarks, search history, etc. preserved)
-* Searches **realistic phrases** like `"eclipse Amelia"` or `"quantum Noah"`
-* Reads names from `random_names.txt`
-* Configurable **profile name** via `config.json`
-* Uses `nltk` for English words
-* Optionally packable using `PyInstaller` for one-file `.exe`
+This Python script automates opening Microsoft Edge, typing randomized search terms (name + dictionary word), and repeating this process for a user-defined number of times. It simulates human keystrokes using `pyautogui` and closes the browser after each search.
 
 ---
 
-### 🛠️ Requirements
+### 🧩 Features
+
+* Opens Microsoft Edge using `subprocess`
+* Waits for the Edge window using `pygetwindow`
+* Simulates user actions using `pyautogui` (like pressing `F4`, typing, Enter)
+* Searches for random combinations of dictionary words and names
+* Closes Edge after each search
+* Uses `random_names.txt` and `nltk` word corpus
+* Compatible with PyInstaller packaging
+
+---
+
+### ⚙️ Requirements
 
 Install the required Python packages:
 
 ```bash
-pip install selenium nltk
+pip install pyautogui pygetwindow nltk
 ```
 
-Also install [Microsoft Edge WebDriver](https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/) compatible with your Edge version, and ensure it's in your system PATH.
+Also install `Edge` browser and ensure it's available in system path.
 
 ---
 
-### 📁 File Structure
+### 📁 Project Structure
 
 ```
 project/
-├── main.py             # Your automation script
-├── random_names.txt    # File with 1000+ names (1 per line)
-├── config.json         # External config file for profile selection
-└── README.md           # This file
+├── main.py               # Main script
+├── random_names.txt      # List of names (1 per line)
+└── README.md             # This documentation
 ```
 
 ---
 
 ### 📄 `random_names.txt`
 
-Each line should be a name (used for pairing with dictionary words):
+Provide a list of names (one per line):
 
 ```
 Olivia
@@ -54,73 +54,55 @@ Ava
 
 ---
 
-### ⚙️ `config.json`
-
-This file **must be placed next to the compiled `.exe`** (or in the same folder during development). Example:
-
-```json
-{
-  "profile": "Profile 1"
-}
-```
-
-To use the **default profile**, set:
-
-```json
-{
-  "profile": "Default"
-}
-```
-
----
-
-### 🚀 How to Run
+### 💻 How to Run
 
 ```bash
 python main.py
 ```
 
-If you're building a `.exe` with PyInstaller, run:
+You will be prompted:
+
+```text
+How many searches need to perform? (10 by default):
+```
+
+Each search opens Edge, performs the search, and closes the browser.
+
+---
+
+### 📦 PyInstaller Packaging
+
+To compile it into an `.exe`:
 
 ```bash
 pyinstaller --onefile --add-data "random_names.txt;." main.py
 ```
 
-> ⚠️ Do **not** include `config.json` in the bundle — it stays **outside** so users can edit it.
+To run without a visible console window (GUI mode):
 
----
-
-### 💡 How It Works
-
-1. Prompts for number of searches (`10` default)
-2. Kills existing Edge processes (to avoid profile lock issues)
-3. Reads `random_names.txt` and `nltk` word list
-4. Loads Edge using the logged-in user profile (from `config.json`)
-5. For each search:
-
-   * Creates a search phrase (`word + name`)
-   * Opens Bing search with that term
-   * Waits for page to fully load
-6. Exits automatically after all searches
-
----
-
-### ✅ Example Output
-
-```
-All existing Edge tabs will be closed. Press Enter to proceed...
-Browser profile: Profile 1
-Edge Browser start kar raha hu...
-Searching for: quantum Ava
-Searching for: gravity Liam
-...
-Performed: 10 searches.
+```bash
+pyinstaller --onefile --noconsole --add-data "random_names.txt;." main.py
 ```
 
----
-
-### 🧾 License
-
-MIT License
+> 💡 Note: Avoid using `input()` if you're using `--noconsole`. Replace with a fixed number or config file.
 
 ---
+
+### 📌 Notes
+
+* On first run, `nltk.download("words")` downloads the dictionary word list.
+* The script uses `taskkill` to force-close Edge after each search.
+* Avoid overusing this script on search engines to prevent rate-limiting or bans.
+
+---
+
+### ❓ Troubleshooting
+
+**Edge not found?**
+
+* Ensure Edge is installed and accessible via `start msedge` in CMD.
+
+**PermissionError when running `pyinstaller`?**
+
+* Make sure the output folder is writable.
+* Run your terminal with Administrator privileges if needed.
